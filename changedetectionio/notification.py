@@ -23,13 +23,21 @@ default_notification_format = 'Text'
 
 def process_notification(n_object, datastore):
     import logging
-    log = logging.getLogger('apprise')
-    log.setLevel('TRACE')
-    apobj = apprise.Apprise(debug=True)
+
+    log = logging.getLogger('changedetection.io:notifications')
+    if datastore.data['settings']['application']['notifications_log_debug']:
+        log.setLevel('TRACE')
+    else:
+        log.setLevel(logging.INFO)
+
+    apobj = apprise.Apprise(debug=datastore.data['settings']['application']['notifications_log_debug'])
 
     for url in n_object['notification_urls']:
         url = url.strip()
-        print (">> Process Notification: AppRise notifying {}".format(url))
+        # Re #295 - sometimes API keys etc are in the URL, don't log these unless asked for
+        logging.debug(">> Process Notification: AppRise notifying %s", url)
+        logging.info(">> Sending Notification")
+
         apobj.add(url)
 
     # Get the notification body from datastore

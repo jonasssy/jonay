@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-
-# @todo logging
 # @todo extra options for url like , verify=False etc.
 # @todo enable https://urllib3.readthedocs.io/en/latest/user-guide.html#ssl as option?
 # @todo option for interval day/6 hour/etc
@@ -14,6 +12,7 @@
 import time
 import os
 import timeago
+import logging
 import flask_login
 from flask_login import login_required
 
@@ -168,6 +167,7 @@ def changedetection_app(config=None, datastore_o=None):
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
     app.secret_key = init_app_secret(config['datastore_path'])
+    app.logger.setLevel(logging.INFO)
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
@@ -505,7 +505,9 @@ def changedetection_app(config=None, datastore_o=None):
             form.notification_title.data = datastore.data['settings']['application']['notification_title']
             form.notification_body.data = datastore.data['settings']['application']['notification_body']
             form.notification_format.data = datastore.data['settings']['application']['notification_format']
+            form.notifications_log_debug.data = datastore.data['settings']['application']['notifications_log_debug']
             form.base_url.data = datastore.data['settings']['application']['base_url']
+
 
             # Password unset is a GET
             if request.values.get('removepassword') == 'yes':
@@ -525,7 +527,9 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_body'] = form.notification_body.data
             datastore.data['settings']['application']['notification_format'] = form.notification_format.data
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
+            datastore.data['settings']['application']['notifications_log_debug'] = form.notifications_log_debug.data
             datastore.data['settings']['application']['base_url'] = form.base_url.data
+
 
             if form.trigger_check.data and len(form.notification_urls.data):
                 n_object = {'watch_url': "Test from changedetection.io!",

@@ -54,6 +54,15 @@
                         {{ render_common_settings_form(form, current_base_url) }}
                     </div>
                 </fieldset>
+                <fieldset>
+                    <div class="field-group">
+                        {{ render_field(form.notifications_log_debug) }}
+                        <span class="pure-form-message-inline">
+                            Enables verbose logging output of notification API communication, use for debugging, <i>Warning</i> - may log sensitive information.
+                        </span>
+                    </div>
+                </fieldset>
+
             </div>
 
             <div class="tab-pane-inner" id="fetching">

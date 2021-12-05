@@ -1,3 +1,4 @@
+import logging
 import threading
 import queue
 import time
@@ -67,7 +68,7 @@ class update_worker(threading.Thread):
 
                                     watch = self.datastore.data['watching'][uuid]
 
-                                    print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
+                                    self.app.logger.info("Change detected in UUID %s - %s",uuid, watch['url'])
 
                                     # Get the newest snapshot data to be possibily used in a notification
                                     newest_key = self.datastore.get_newest_history_key(uuid)
@@ -83,7 +84,8 @@ class update_worker(threading.Thread):
 
                                     # Did it have any notification alerts to hit?
                                     if len(watch['notification_urls']):
-                                        print(">>> Notifications queued for UUID from watch {}".format(uuid))
+                                        logging.info(">>> Notifications queued for UUID from watch %s", uuid)
+                                        #print(">>> Notifications queued for UUID from watch {}".format(uuid))
                                         n_object['notification_urls'] = watch['notification_urls']
                                         n_object['notification_title'] = watch['notification_title']
                                         n_object['notification_body'] = watch['notification_body']

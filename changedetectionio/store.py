@@ -22,6 +22,8 @@ class ChangeDetectionStore:
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
         self.stop_thread = False
+        self.log = logging.getLogger()
+        self.log.setLevel(logging.INFO)
 
         self.__data = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
@@ -48,6 +50,7 @@ class ChangeDetectionStore:
                     'notification_title': None,
                     'notification_body': None,
                     'notification_format': None,
+                    'notifications_log_debug': False
                 }
             }
         }
@@ -117,12 +120,12 @@ class ChangeDetectionStore:
                     _blank.update(watch)
                     self.__data['watching'].update({uuid: _blank})
                     self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
-                    print("Watching:", uuid, self.__data['watching'][uuid]['url'])
+                    self.log.info("Watching: %s %s", uuid, self.__data['watching'][uuid]['url'])
 
         # First time ran, doesnt exist.
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             if include_default_watches:
-                print("Creating JSON store at", self.datastore_path)
+                self.log.info("Creating JSON store at", self.datastore_path)
 
                 self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
                 self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
@@ -333,7 +336,7 @@ class ChangeDetectionStore:
         try:
             mkdir(output_path)
         except FileExistsError:
-            print(output_path, "already exists.")
+            self.log.error("Output path %s already exists.", output_path)
 
         self.sync_to_json()
         return new_uuid
@@ -352,14 +355,14 @@ class ChangeDetectionStore:
         return fname
 
     def sync_to_json(self):
-        logging.info("Saving JSON..")
+        self.log.info("Saving JSON..")
 
         try:
             data = deepcopy(self.__data)
         except RuntimeError as e:
             # Try again in 15 seconds
             time.sleep(15)
-            logging.error ("! Data changed when writing to JSON, trying again.. %s", str(e))
+            self.log.error("! Data changed when writing to JSON, trying again.. %s", str(e))
             self.sync_to_json()
             return
         else:
@@ -372,7 +375,7 @@ class ChangeDetectionStore:
                     json.dump(data, json_file, indent=4)
 
             except Exception as e:
-                logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
+                self.log.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
 
             else:
                 os.rename(self.json_store_path+".tmp", self.json_store_path)
@@ -385,7 +388,7 @@ class ChangeDetectionStore:
 
         while True:
             if self.stop_thread:
-                print("Shutting down datastore thread")
+                self.log.info("Shutting down datastore thread")
                 return
 
             if self.needs_write:
@@ -397,16 +400,14 @@ class ChangeDetectionStore:
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
     # This usually is not used, but can be handy.
     def remove_unused_snapshots(self):
-        print ("Removing snapshots from datastore that are not in the index..")
+        import pathlib
 
         index=[]
         for uuid in self.data['watching']:
             for id in self.data['watching'][uuid]['history']:
                 index.append(self.data['watching'][uuid]['history'][str(id)])
 
-        import pathlib
         # Only in the sub-directories
         for item in pathlib.Path(self.datastore_path).rglob("*/*txt"):
             if not str(item) in index:
-                print ("Removing",item)
                 unlink(item)

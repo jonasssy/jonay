@@ -232,3 +232,4 @@ class globalSettingsForm(commonSettingsForm):
                                                [validators.NumberRange(min=1)])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     base_url = StringField('Base URL', validators=[validators.Optional()])
+    notifications_log_debug = BooleanField('Enable debug/verbose notification log output', default=False)
